@@ -1,5 +1,9 @@
 # Using CDHU Whisper
 
+>[!Important]
+>Make sure you are connected to the university's network or you are using the UU VPN.
+
+<br />
 Open Google Chrome and go to https://130.238.146.161/
 
 You will be prompted with a warning that your connection is not private. Click 'Advanced':
