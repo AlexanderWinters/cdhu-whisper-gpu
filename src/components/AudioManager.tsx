@@ -375,6 +375,7 @@ function SettingsModal(props: {
     onClose: () => void;
     transcriber: Transcriber;
 }) {
+    // @ts-ignore
     const names = Object.values(LANGUAGES).map(titleCase);
 
     const models = MODELS.filter(
