@@ -36,34 +36,37 @@ function App() {
                     </a>
                 </div>
                 <br />
-                <AudioManager transcriber={transcriber} />
-                <Transcript transcribedData={transcriber.output} />
-            </div>
+                <div className={'flex flex-wrap gap-4 items-start justify-center'}>
+                    <AudioManager transcriber={transcriber} />
+                    <div className={'flex flex-col'}>
+                        <label className='text-sm mb-1'>Select the source language:</label>
+                        <div className='flex flex-col items-end'>
+                            <label className='inline-flex items-center'>
+                                <input
+                                    type='radio'
+                                    value='english'
+                                    checked={transcriber.language === 'english'}
+                                    onChange={() => transcriber.setLanguage("english")}
+                                />
+                                <span className='ml-2'>en</span>
+                            </label>
+                            <label className='inline-flex items-center'>
+                                <input
+                                    type='radio'
+                                    value='swedish'
+                                    checked={transcriber.language === 'swedish'}
+                                    onChange={() => transcriber.setLanguage("swedish")}
+                                />
+                                <span className='ml-2'>se</span>
+                            </label>
+                            {/* Add more languages as needed */}
+                        </div>
 
-            <div className='absolute bottom-4 right-16 flex flex-col items-end'>
-                <label className='text-sm mb-1'>Select Language:</label>
-                <div className='flex flex-col items-end'>
-                    <label className='inline-flex items-center'>
-                        <input
-                            type='radio'
-                            value='english'
-                            checked={transcriber.language === 'english'}
-                            onChange={() => transcriber.setLanguage("english")}
-                        />
-                        <span className='ml-2'>en</span>
-                    </label>
-                    <label className='inline-flex items-center'>
-                        <input
-                            type='radio'
-                            value='swedish'
-                            checked={transcriber.language === 'swedish'}
-                            onChange={() => transcriber.setLanguage("swedish")}
-                        />
-                        <span className='ml-2'>se</span>
-                    </label>
-                    {/* Add more languages as needed */}
+                    </div>
+                    <Transcript transcribedData={transcriber.output} />
                 </div>
             </div>
+
 
 
             {/*<div className='absolute bottom-4'>
