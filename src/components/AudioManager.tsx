@@ -294,6 +294,38 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                 />
             </div>
 
+            <SettingsTile
+                className='flex bottom-4 right-4'
+                transcriber={props.transcriber}
+                icon={<SettingsIcon />}
+            />
+
+            <div className={'flex flex-col'}>
+                <label className='text-sm mb-1'>Select the source language:</label>
+                <div className='flex flex-col justify-left'>
+                    <label className='inline-flex items-center'>
+                        <input
+                            type='radio'
+                            value='english'
+                            checked={props.transcriber.language === 'english'}
+                            onChange={() => props.transcriber.setLanguage("english")}
+                        />
+                        <span className='ml-2'>en</span>
+                    </label>
+                    <label className='inline-flex items-center'>
+                        <input
+                            type='radio'
+                            value='swedish'
+                            checked={props.transcriber.language === 'swedish'}
+                            onChange={() => props.transcriber.setLanguage("swedish")}
+                        />
+                        <span className='ml-2'>se</span>
+                    </label>
+                    {/* Add more languages as needed */}
+                </div>
+
+            </div>
+
             {audioData && (
                 <>
                     <AudioPlayer
@@ -328,11 +360,7 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                 </>
             )}
 
-            <SettingsTile
-                className='absolute bottom-4 right-4'
-                transcriber={props.transcriber}
-                icon={<SettingsIcon />}
-            />
+
         </>
     );
 }
