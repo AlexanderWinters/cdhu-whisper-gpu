@@ -24,8 +24,9 @@ function titleCase(str: string) {
 const LANGUAGES = {
     en: "english",
     sv: "swedish",
-    /*zh: "chinese",
+    pl: "polish",
     de: "german",
+    /*zh: "chinese",
     es: "spanish/castilian",
     ru: "russian",
     ko: "korean",
@@ -33,7 +34,6 @@ const LANGUAGES = {
     ja: "japanese",
     pt: "portuguese",
     tr: "turkish",
-    pl: "polish",
     ca: "catalan/valencian",
     nl: "dutch/flemish",
     ar: "arabic",
@@ -125,13 +125,15 @@ const LANGUAGES = {
 
 const MODELS = Object.entries({
     // Original checkpoints
-    "onnx-community/whisper-tiny": 120, // 33 + 87
-    "onnx-community/whisper-base": 206, // 83 + 123
-    "onnx-community/whisper-small": 586, // 353 + 233
-    "onnx-community/whisper-large-v3-turbo": 1604, // 1270 + 334
+    "KBLab/kb-whisper-large": 3009,
+    "KBLab/kb-whisper-medium": 1500
+    //"onnx-community/whisper-tiny": 120, // 33 + 87
+    //"onnx-community/whisper-base": 206, // 83 + 123
+    //"onnx-community/whisper-small": 586, // 353 + 233
+    //"onnx-community/whisper-large-v3-turbo": 1604, // 1270 + 334
 
     // Distil Whisper (English-only)
-    "onnx-community/distil-small.en": 538, // 353 + 185
+    //"onnx-community/distil-small.en": 538, // 353 + 185
 });
 
 export enum AudioSource {
@@ -306,20 +308,38 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                     <label className='inline-flex items-center'>
                         <input
                             type='radio'
-                            value='english'
-                            checked={props.transcriber.language === 'english'}
-                            onChange={() => props.transcriber.setLanguage("english")}
-                        />
-                        <span className='ml-2'>en</span>
-                    </label>
-                    <label className='inline-flex items-center'>
-                        <input
-                            type='radio'
                             value='swedish'
                             checked={props.transcriber.language === 'swedish'}
                             onChange={() => props.transcriber.setLanguage("swedish")}
                         />
-                        <span className='ml-2'>se</span>
+                        <span className='ml-2'>Swedish</span>
+                    </label>
+                    <label className='inline-flex items-center'>
+                        <input
+                            type='radio'
+                            value='english'
+                            checked={props.transcriber.language === 'english'}
+                            onChange={() => props.transcriber.setLanguage("english")}
+                        />
+                        <span className='ml-2'>English</span>
+                    </label>
+                    <label className='inline-flex items-center'>
+                        <input
+                            type='radio'
+                            value='german'
+                            checked={props.transcriber.language === 'german'}
+                            onChange={() => props.transcriber.setLanguage("german")}
+                        />
+                        <span className='ml-2'>German</span>
+                    </label>
+                    <label className='inline-flex items-center'>
+                        <input
+                            type='radio'
+                            value='polish'
+                            checked={props.transcriber.language === 'polish'}
+                            onChange={() => props.transcriber.setLanguage("polish")}
+                        />
+                        <span className='ml-2'>Polish</span>
                     </label>
                     {/* Add more languages as needed */}
                 </div>
