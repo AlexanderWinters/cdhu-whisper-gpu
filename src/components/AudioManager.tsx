@@ -150,16 +150,63 @@ export function AudioManager(props: { transcriber: Transcriber }) {
               url: string;
               source: AudioSource;
               mimeType: string;
+              name?: string;
           }
         | undefined
     >(undefined);
+
     const [audioDownloadUrl, setAudioDownloadUrl] = useState<
         string | undefined
     >(undefined);
 
+    const [batch, setBatch] = useState<{
+        decoded: AudioBuffer;
+        blobUrl: string;
+        mimeType: string;
+        name: string;
+        status: 'pending' | 'transcribing' | 'completed' | 'error';
+        transcript?: string;
+    }[]>([]);
+
+    const [isBatchMode, setIsBatchMode] = useState(false);
+
+    useEffect(() => {
+        if (isBatchMode && !props.transcriber.isBusy) {
+            const nextIndex = batch.findIndex(item => item.status === 'pending');
+            if (nextIndex !== -1) {
+                const nextItem = batch[nextIndex];
+                setBatch(prev => prev.map((item, i) => i === nextIndex ? { ...item, status: 'transcribing' } : item));
+                props.transcriber.start(nextItem.decoded, nextItem.name);
+            } else {
+                // Check if we just finished the last one
+                const transcribingIndex = batch.findIndex(item => item.status === 'transcribing');
+                if (transcribingIndex === -1 && batch.length > 0 && batch.every(item => item.status === 'completed')) {
+                    // All done
+                }
+            }
+        }
+    }, [isBatchMode, batch, props.transcriber.isBusy]);
+
+    useEffect(() => {
+        if (isBatchMode && props.transcriber.output && !props.transcriber.isBusy) {
+            const transcribingIndex = batch.findIndex(item => item.status === 'transcribing');
+            if (transcribingIndex !== -1) {
+                const currentItem = batch[transcribingIndex];
+                // Check if the output name matches (or just assume since it's sequential)
+                setBatch(prev => prev.map((item, i) => i === transcribingIndex ? {
+                    ...item,
+                    status: 'completed',
+                    transcript: props.transcriber.output?.text
+                } : item));
+            }
+        }
+    }, [props.transcriber.output, props.transcriber.isBusy, isBatchMode]);
+
     const resetAudio = () => {
         setAudioData(undefined);
         setAudioDownloadUrl(undefined);
+        setBatch([]);
+        setIsBatchMode(false);
     };
 
     const setAudioFromDownload = async (
@@ -262,15 +309,25 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                     <VerticalBar />
                     <FileTile
                         icon={<FolderIcon />}
-                        text={"From file"}
-                        onFileUpdate={(decoded, blobUrl, mimeType) => {
+                        text={"From file(s)"}
+                        onFilesUpdate={(files) => {
                             props.transcriber.onInputChange();
-                            setAudioData({
-                                buffer: decoded,
-                                url: blobUrl,
-                                source: AudioSource.FILE,
-                                mimeType: mimeType,
-                            });
+                            resetAudio();
+                            if (files.length === 1) {
+                                setAudioData({
+                                    buffer: files[0].decoded,
+                                    url: files[0].blobUrl,
+                                    source: AudioSource.FILE,
+                                    mimeType: files[0].mimeType,
+                                    name: files[0].name,
+                                });
+                            } else if (files.length > 1) {
+                                setBatch(files.map(f => ({
+                                    ...f,
+                                    status: 'pending'
+                                })));
+                                setIsBatchMode(true);
+                            }
                         }}
                     />
                     {navigator.mediaDevices && (
@@ -345,6 +402,49 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                 </div>
 
             </div>
+
+            {isBatchMode && batch.length > 0 && (
+                <div className='w-full mt-4 p-4 bg-white rounded-lg shadow-xl shadow-black/5 ring-1 ring-slate-700/10'>
+                    <h3 className='text-lg font-semibold mb-2'>Batch Progress</h3>
+                    <div className='space-y-2'>
+                        {batch.map((item, index) => (
+                            <div key={index} className='flex items-center justify-between p-2 border-b last:border-0'>
+                                <div className='flex flex-col'>
+                                    <span className='text-sm font-medium truncate max-w-xs'>{item.name}</span>
+                                    <span className={`text-xs ${item.status === 'completed' ? 'text-green-500' : item.status === 'transcribing' ? 'text-blue-500' : 'text-gray-500'}`}>
+                                        {item.status.toUpperCase()}
+                                    </span>
+                                </div>
+                                {item.status === 'completed' && (
+                                    <div className='flex space-x-2'>
+                                        <button
+                                            onClick={() => {
+                                                const blob = new Blob([item.transcript || ""], { type: "text/plain" });
+                                                const url = URL.createObjectURL(blob);
+                                                const link = document.createElement("a");
+                                                link.href = url;
+                                                link.download = item.name + ".txt";
+                                                link.click();
+                                                URL.revokeObjectURL(url);
+                                            }}
+                                            className='text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600'
+                                        >
+                                            Download TXT
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    {!batch.every(item => item.status === 'completed' || item.status === 'error') && (
+                        <div className='mt-4'>
+                            <p className='text-sm text-gray-500'>
+                                Transcribing {batch.filter(item => item.status === 'completed').length} / {batch.length} files...
+                            </p>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {audioData && (
                 <>
@@ -603,38 +703,46 @@ function UrlModal(props: {
 function FileTile(props: {
     icon: JSX.Element;
     text: string;
-    onFileUpdate: (
-        decoded: AudioBuffer,
-        blobUrl: string,
-        mimeType: string,
+    onFilesUpdate: (
+        files: {
+            decoded: AudioBuffer;
+            blobUrl: string;
+            mimeType: string;
+            name: string;
+        }[],
     ) => void;
 }) {
     // Create hidden input element
     const elem = document.createElement("input");
     elem.type = "file";
-    elem.oninput = (event) => {
+    elem.multiple = true;
+    elem.oninput = async (event) => {
         // Make sure we have files to use
         const files = (event.target as HTMLInputElement).files;
         if (!files) return;
 
-        // Create a blob that we can use as an src for our audio element
-        const urlObj = URL.createObjectURL(files[0]);
-        const mimeType = files[0].type;
+        const results: {
+            decoded: AudioBuffer;
+            blobUrl: string;
+            mimeType: string;
+            name: string;
+        }[] = [];
 
-        const reader = new FileReader();
-        reader.addEventListener("load", async (e) => {
-            const arrayBuffer = e.target?.result as ArrayBuffer; // Get the ArrayBuffer
-            if (!arrayBuffer) return;
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const urlObj = URL.createObjectURL(file);
+            const mimeType = file.type;
+            const name = file.name;
 
+            const arrayBuffer = await file.arrayBuffer();
             const audioCTX = new AudioContext({
                 sampleRate: Constants.SAMPLING_RATE,
             });
-
             const decoded = await audioCTX.decodeAudioData(arrayBuffer);
+            results.push({ decoded, blobUrl: urlObj, mimeType, name });
+        }
 
-            props.onFileUpdate(decoded, urlObj, mimeType);
-        });
-        reader.readAsArrayBuffer(files[0]);
+        props.onFilesUpdate(results);
 
         // Reset files
         elem.value = "";

@@ -24,6 +24,7 @@ export interface TranscriberData {
     tps?: number;
     text: string;
     chunks: { text: string; timestamp: [number, number | null] }[];
+    name?: string;
 }
 
 export interface Transcriber {
@@ -31,7 +32,7 @@ export interface Transcriber {
     isBusy: boolean;
     isModelLoading: boolean;
     progressItems: ProgressItem[];
-    start: (audioData: AudioBuffer | undefined) => void;
+    start: (audioData: AudioBuffer | undefined, name?: string) => void;
     output?: TranscriberData;
     model: string;
     setModel: (model: string) => void;
@@ -51,6 +52,8 @@ export function useTranscriber(): Transcriber {
     const [isModelLoading, setIsModelLoading] = useState(false);
 
     const [progressItems, setProgressItems] = useState<ProgressItem[]>([]);
+
+    const [currentName, setCurrentName] = useState<string | undefined>(undefined);
 
     const webWorker = useWorker((event) => {
         const message = event.data;
@@ -76,8 +79,12 @@ export function useTranscriber(): Transcriber {
                     text: updateMessage.data.text,
                     tps: updateMessage.data.tps,
                     chunks: updateMessage.data.chunks,
+                    name: currentName,
                 });
                 setIsBusy(busy);
+                if (message.status === "complete") {
+                    setCurrentName(undefined);
+                }
                 break;
 
             case "initiate":
@@ -121,10 +128,11 @@ export function useTranscriber(): Transcriber {
     }, []);
 
     const postRequest = useCallback(
-        async (audioData: AudioBuffer | undefined) => {
+        async (audioData: AudioBuffer | undefined, name?: string) => {
             if (audioData) {
                 setTranscript(undefined);
                 setIsBusy(true);
+                setCurrentName(name);
 
                 let audio;
                 if (audioData.numberOfChannels === 2) {
