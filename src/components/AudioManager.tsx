@@ -126,11 +126,11 @@ const LANGUAGES = {
 const MODELS = Object.entries({
     // Original checkpoints
     "KBLab/kb-whisper-large": 3009,
-    "KBLab/kb-whisper-medium": 1500
-    //"onnx-community/whisper-tiny": 120, // 33 + 87
-    //"onnx-community/whisper-base": 206, // 83 + 123
-    //"onnx-community/whisper-small": 586, // 353 + 233
-    //"onnx-community/whisper-large-v3-turbo": 1604, // 1270 + 334
+    "KBLab/kb-whisper-medium": 1500,
+    "onnx-community/whisper-tiny": 120, // 33 + 87
+    "onnx-community/whisper-base": 206, // 83 + 123
+    "onnx-community/whisper-small": 586, // 353 + 233
+    "onnx-community/whisper-large-v3-turbo": 1604, // 1270 + 334
 
     // Distil Whisper (English-only)
     //"onnx-community/distil-small.en": 538, // 353 + 185
